@@ -26,7 +26,7 @@ from pywinos import WinOSClient
 ```python
 from pywinos import WinOSClient
 
-tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd')
+tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd', logger_enabled=True)
 response = tool.run_cmd('$PSVersionTable.PSVersion')
 
 print(response)  
@@ -44,10 +44,10 @@ print(response.ok)  # True
 ```python
 from pywinos import WinOSClient
 
-tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd')
+tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd', logger_enabled=False)
 response = tool.run_cmd('whoami')
 
-print(response)  # ResponseParser(response=(0, 'test-vm1\\administrator', None, 'whoami'))
+print(response)  # <Response code 0, out "b'\r\nMajor  Minor  Buil'", err "b''">
 print(response.exited)  # 0
 print(response.stdout)  # test-vm1\administrator
 print(response.stderr)  # None
