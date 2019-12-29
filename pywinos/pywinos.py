@@ -62,7 +62,8 @@ class ResponseParser(Logger):
     def __repr__(self):
         return str(self.response)
 
-    def _decoder(self, response):
+    @staticmethod
+    def _decoder(response):
         # decode = self.decode
         # if self.get_current_os_name() == 'Windows':
         #     decode = 'cp1252'
