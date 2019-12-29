@@ -4,7 +4,6 @@ import platform
 import socket
 from dataclasses import dataclass
 from subprocess import Popen, PIPE, TimeoutExpired
-from typing import Any
 
 import winrm
 from requests.exceptions import ConnectionError
@@ -25,11 +24,13 @@ class Logger:
     file: bool = False
     date_format: str = '%Y-%m-%d %H:%M:%S'
     format: str = '%(asctime)-15s [%(name)s] [LINE:%(lineno)d] [%(levelname)s] %(message)s'
+    logger_enabled: bool = True
 
     def __post_init__(self):
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
         self.formatter = logging.Formatter(fmt=self.format, datefmt=self.date_format)
+        self.logger.disabled = not self.logger_enabled
 
         # Console handler with a INFO log level
         if self.console:
@@ -51,31 +52,46 @@ class SuppressFilter(logging.Filter):
         return 'wsman' not in record.getMessage()
 
 
-@dataclass()
-class ResponseParser:
+class ResponseParser(Logger):
     """Response parser"""
 
-    response: Any
+    def __init__(self, response, *args, **kwargs):
+        super().__init__(name=self.__class__.__name__, *args, **kwargs)
+        self.response = response
+
+    def __repr__(self):
+        return str(self.response)
+
+    def _decoder(self, response):
+        # decode = self.decode
+        # if self.get_current_os_name() == 'Windows':
+        #     decode = 'cp1252'
+        return response.decode('cp1252').strip()
 
     @property
-    def stdout(self) -> list:
-        return self.response[1]
+    def stdout(self) -> str:
+        stdout = self._decoder(self.response.std_out)
+        out = stdout if stdout else None
+        self.logger.info(out)
+        return out
 
     @property
-    def stderr(self) -> list:
-        return self.response[2]
+    def stderr(self) -> str:
+        stderr = self._decoder(self.response.std_err)
+        err = stderr if stderr else None
+        if err:
+            self.logger.error(err)
+        return err
 
     @property
     def exited(self) -> int:
-        return self.response[0]
+        exited = self.response.status_code
+        self.logger.info(exited)
+        return exited
 
     @property
-    def ok(self):
-        return self.response[0] == 0
-
-    @property
-    def command(self):
-        return self.response[3]
+    def ok(self) -> bool:
+        return self.response.status_code == 0
 
 
 class WinOSClient(Logger):
@@ -86,18 +102,14 @@ class WinOSClient(Logger):
             host: str,
             username: str,
             password: str,
-            decode: str = 'cp1252',
             logger_enabled: bool = True,
             *args, **kwargs):
-        super().__init__(name=self.__class__.__name__, *args, **kwargs)
+        super().__init__(name=self.__class__.__name__, logger_enabled=logger_enabled, *args, **kwargs)
 
         self.host = host
         self.username = username
         self.password = password
-        self.decode = decode
-
-        self.session = winrm.Session(self.host, auth=(self.username, self.password))
-
+        self.logger_enabled = logger_enabled
         self.logger.disabled = not logger_enabled
 
     def __str__(self):
@@ -122,8 +134,17 @@ class WinOSClient(Logger):
     def get_current_os_name():
         return platform.system()
 
-    def _client(self, endpoint, transport):
-        """Create connection using low-level API"""
+    @property
+    def session(self):
+        """Create connection to a remote server"""
+
+        session = winrm.Session(self.host, auth=(self.username, self.password))
+        return session
+
+    def _protocol(self, endpoint, transport):
+        """Create Protocol using low-level API"""
+
+        session = self.session
 
         protocol = Protocol(
             endpoint=endpoint,
@@ -133,8 +154,55 @@ class WinOSClient(Logger):
             server_cert_validation='ignore',
             message_encryption='always')
 
-        self.session.protocol = protocol
-        return self.session
+        session.protocol = protocol
+        return session
+
+    def _client(
+            self,
+            command,
+            ps: bool = False,
+            cmd: bool = False,
+            use_cred_ssp: bool = False,
+            *args) -> ResponseParser:
+        """
+        The client to send PowerShell or command-line commands
+
+        :param command: Command to execute
+        :param ps: Specify if PowerShel is used
+        :param cmd: Specify if command-line is used
+        :param use_cred_ssp: Specify if CredSSP is used
+        :param args: Arguments for command-line
+        :return:
+        """
+
+        response = None
+
+        try:
+            self.logger.info('[COMMAND] ' + command)
+            if ps:  # Use PowerShell
+                endpoint = f'https://{self.host}:5986/wsman' if use_cred_ssp else f'http://{self.host}:5985/wsman'
+                transport = 'credssp' if use_cred_ssp else 'ntlm'
+                client = self._protocol(endpoint, transport)
+                response = client.run_ps(command)
+            elif cmd:  # Use command-line
+                client = self._protocol(endpoint=f'http://{self.host}:5985/wsman', transport='ntlm')
+                response = client.run_cmd(command, [arg for arg in args])
+
+            return ResponseParser(response, logger_enabled=self.logger_enabled)
+
+        # Catch exceptions
+        except InvalidCredentialsError as err:
+            self.logger.error(f'Invalid credentials: {self.username}@{self.password}. ' + str(err))
+            raise InvalidCredentialsError
+        except ConnectionError as err:
+            self.logger.error('Connection error: ' + str(err))
+            raise ConnectionError
+        except (WinRMError, WinRMOperationTimeoutError, WinRMTransportError) as err:
+            self.logger.error('WinRM error: ' + str(err))
+            raise err
+        except Exception as err:
+            self.logger.error('Unhandled error: ' + str(err))
+            raise err
 
     def run_cmd_local(self, cmd, show_cmd=False, timeout=60):
         """Main function to send commands using subprocess LOCALLY
@@ -169,101 +237,17 @@ class WinOSClient(Logger):
         :return: ResponseParser object
         """
 
-        client = self._client(endpoint=f'http://{self.host}:5985/wsman', transport='ntlm')
-
-        try:
-            self.logger.info('[COMMAND] ' + command)
-            response = client.run_cmd(command, [arg for arg in args])
-
-            # Get exit code
-            exited = response.status_code
-
-            # Get STDOUT
-            stdout = self._parser(response.std_out)
-            out = stdout if stdout else None
-            self.logger.info(f'{exited}: {out}')
-
-            # Get STDERR
-            stderr = self._parser(response.std_err)
-            err = stderr if stderr else None
-            if err:
-                self.logger.error(err)
-
-            result = exited, out, err, command
-            return ResponseParser(result)
-
-        except InvalidCredentialsError as err:
-            self.logger.error(f'Invalid credentials: {self.username}@{self.password}.' + str(err))
-            raise InvalidCredentialsError
-        except ConnectionError as err:
-            self.logger.error('Connection error:' + str(err))
-            raise ConnectionError
-        except (WinRMError, WinRMOperationTimeoutError, WinRMTransportError) as err:
-            self.logger.error('WinRM error.' + str(err))
-            raise err
-        except Exception as err:
-            self.logger.error('Unhandled error' + str(err))
-            raise err
+        return self._client(command, cmd=True, *args)
 
     def run_ps(self, command, use_cred_ssp: bool = False):
         """Allows to execute PowerShell command or script through a remote shell
 
-        :param script: Command
+        :param command: Command
         :param use_cred_ssp:
         :return:
         """
 
-        transport = 'credssp' if use_cred_ssp else 'ntlm'
-        endpoint = f'https://{self.host}:5986/wsman' if use_cred_ssp else f'http://{self.host}:5985/wsman'
-
-        protocol = Protocol(
-            endpoint, transport,
-            username=self.username,
-            password=self.password,
-            server_cert_validation='ignore',
-            message_encryption='always')
-
-        self.session.protocol = protocol
-
-        try:
-            self.logger.info('[SCRIPT] ' + command)
-            response = self.session.run_ps(command)
-
-            # Get exit code
-            exited = response.status_code
-
-            # Get STDOUT
-            stdout = self._parser(response.std_out)
-            out = stdout if stdout else None
-            self.logger.info(f'{exited}: {out}')
-
-            # Get STDERR
-            stderr = self._parser(response.std_err)
-            err = stderr if stderr else None
-            if err:
-                self.logger.error(err)
-
-            result = exited, out, err, command
-            return ResponseParser(result)
-
-        except InvalidCredentialsError as err:
-            self.logger.error(f'Invalid credentials: {self.username}@{self.password}.' + str(err))
-            raise InvalidCredentialsError
-        except ConnectionError as err:
-            self.logger.error('Connection error:' + str(err))
-            raise ConnectionError
-        except (WinRMError, WinRMOperationTimeoutError, WinRMTransportError) as err:
-            self.logger.error('WinRM error.' + str(err))
-            raise err
-        except Exception as err:
-            self.logger.error('Unhandled error' + str(err))
-            raise err
-
-    def _parser(self, response):
-        # decode = self.decode
-        # if self.get_current_os_name() == 'Windows':
-        #     decode = 'cp1252'
-        return response.decode(self.decode).strip()
+        return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
 
     @staticmethod
     def exists(path) -> bool:
