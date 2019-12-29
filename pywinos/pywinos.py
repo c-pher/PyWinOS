@@ -11,8 +11,6 @@ from winrm import Protocol
 from winrm.exceptions import InvalidCredentialsError, WinRMError, WinRMTransportError, WinRMOperationTimeoutError
 
 __author__ = 'Andrey Komissarov'
-__version__ = '1.0.0'
-__maintainer__ = 'Andrey Komissarov, QA dep'
 __email__ = 'a.komisssarov@gmail.com'
 __date__ = '12.2019'
 

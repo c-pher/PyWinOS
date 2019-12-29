@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pywinos',
-    version='1.0.0rc1',
+    version='1.0.0',
     packages=['pywinos'],
     url='https://github.com/agegemon/PyWinOS',
     license='MIT',
@@ -31,7 +31,7 @@ setup(
     ],
     install_requires=[
         'pywinrm>=0.4.1',
-        'requests-credssp>=1.1.1'
+        'requests-credssp>=1.1.1', 'requests'
     ],
     python_requires='>=3.6',
 )
