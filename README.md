@@ -1,3 +1,6 @@
+[![Coverage Status](https://coveralls.io/repos/github/agegemon/PyWinOS/badge.svg?branch=master)](https://coveralls.io/github/agegemon/PyWinOS?branch=master)
+
+
 # PyWinOS
 The cross-platform tool to work with remote and local Windows OS.
 
@@ -68,7 +71,7 @@ tool = WinOSClient(logger_enabled=False)
 # tool = WinOSClient(host='127.0.0.1', logger_enabled=False)
 response = tool.run_cmd('whoami')
 
-print(response)  # (0, b'my_pc\\bobby\r\n', b'')
+print(response)  # (0, b'mypc\\bobby\r\n', b'')
 print(response.exited)  # 0
 print(response.stdout)  # my_pc\bobby
 print(response.stderr)  # None
