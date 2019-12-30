@@ -6,6 +6,8 @@ PyWinOS uses the Windows Remote Manager (WinRM) service. It can establish connec
 - Command line
 - WMI.
 
+It can execute command-line locally too.
+
 For more information on WinRM, please visit [Microsoft’s WinRM site](https://docs.microsoft.com/en-us/windows/win32/winrm/portal?redirectedfrom=MSDN)
 It based on [pywinrm](https://pypi.org/project/pywinrm/).
 
@@ -21,12 +23,12 @@ pip install PyWinOS
 from pywinos import WinOSClient
 ```
 ---
-## Usage
+## Usage (remote)
 #### PowerShell:
 ```python
 from pywinos import WinOSClient
 
-tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd', logger_enabled=True)
+tool = WinOSClient(host='172.16.0.126', username='administrator', password='rds123RDS', logger_enabled=True)
 response = tool.run_cmd('$PSVersionTable.PSVersion')
 
 print(response)  
@@ -54,3 +56,20 @@ print(response.stderr)  # None
 print(response.ok)  # True
 
 ```
+
+## Usage (local)
+#### Command line:
+```python
+from pywinos import WinOSClient
+
+tool = WinOSClient(logger_enabled=False)
+# tool = WinOSClient(host='', logger_enabled=False)
+# tool = WinOSClient(host='localhost', logger_enabled=False)
+# tool = WinOSClient(host='127.0.0.1', logger_enabled=False)
+response = tool.run_cmd('whoami')
+
+print(response)  # (0, b'my_pc\\bobby\r\n', b'')
+print(response.exited)  # 0
+print(response.stdout)  # my_pc\bobby
+print(response.stderr)  # None
+print(response.ok)  # True
