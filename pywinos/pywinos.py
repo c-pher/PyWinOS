@@ -69,14 +69,20 @@ class ResponseParser(Logger):
 
     @property
     def stdout(self) -> str:
-        stdout = self._decoder(self.response.std_out)
+        try:
+            stdout = self._decoder(self.response.std_out)
+        except AttributeError:
+            stdout = self._decoder(self.response[1])
         out = stdout if stdout else None
         self.logger.info(out)
         return out
 
     @property
     def stderr(self) -> str:
-        stderr = self._decoder(self.response.std_err)
+        try:
+            stderr = self._decoder(self.response.std_err)
+        except AttributeError:
+            stderr = self._decoder(self.response[2])
         err = stderr if stderr else None
         if err:
             self.logger.error(err)
@@ -84,13 +90,19 @@ class ResponseParser(Logger):
 
     @property
     def exited(self) -> int:
-        exited = self.response.status_code
+        try:
+            exited = self.response.status_code
+        except AttributeError:
+            exited = self.response[0]
         self.logger.info(exited)
         return exited
 
     @property
     def ok(self) -> bool:
-        return self.response.status_code == 0
+        try:
+            return self.response.status_code == 0
+        except AttributeError:
+            return self.response[0] == 0
 
 
 class WinOSClient(Logger):
@@ -98,9 +110,9 @@ class WinOSClient(Logger):
 
     def __init__(
             self,
-            host: str,
-            username: str,
-            password: str,
+            host: str = '',
+            username: str = '',
+            password: str = '',
             logger_enabled: bool = True,
             *args, **kwargs):
         super().__init__(name=self.__class__.__name__, logger_enabled=logger_enabled, *args, **kwargs)
@@ -133,6 +145,7 @@ class WinOSClient(Logger):
     def get_current_os_name():
         return platform.system()
 
+    # ---------- Remote section ----------
     @property
     def session(self):
         """Create connection to a remote server"""
@@ -201,41 +214,23 @@ class WinOSClient(Logger):
             raise err
         except Exception as err:
             self.logger.error('Unhandled error: ' + str(err))
+            self.logger.error('Try to use "run_cmd_local" method instead.')
             raise err
 
-    def run_cmd_local(self, cmd, show_cmd=False, timeout=60):
-        """Main function to send commands using subprocess LOCALLY
-
-        :param cmd: string, command
-        :param timeout: timeout for command
-        :param show_cmd:
-        :return: Decoded response
-
+    def run_cmd(self, command, timeout: int = 60, *args) -> ResponseParser:
         """
+        Allows to execute cmd command on a remote server.
 
-        if show_cmd:
-            print(cmd)
+        Executes command locally if host was not specified or host == "localhost/127.0.0.1"
 
-        with Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE) as process:
-            try:
-                self.logger.info('[COMMAND] ' + cmd)
-                stdout, stderr = process.communicate(timeout=timeout)
-                data = stdout + stderr
-                return data.decode()
-            except TimeoutExpired:
-                process.kill()
-                stdout, stderr = process.communicate()
-                data = stdout + stderr
-                return data.decode()
-
-    def run_cmd(self, command, *args) -> ResponseParser:
-        """Allows to execute cmd command on a remote server.
-
-        :param command:
-        :param args:
+        :param command: command
+        :param args: additional command arguments
+        :param timeout: timeout
         :return: ResponseParser object
         """
 
+        if not self.host or self.host == 'localhost' or self.host == '127.0.0.1':
+            return self._client_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
     def run_ps(self, command, use_cred_ssp: bool = False):
@@ -247,6 +242,29 @@ class WinOSClient(Logger):
         """
 
         return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
+
+    # ---------- Local section ----------
+    def _client_local(self, cmd, timeout=60):
+        """Main function to send command-line commands using subprocess LOCALLY
+
+        :param cmd: string, command
+        :param timeout: timeout for command
+        :return: Decoded response
+
+        """
+
+        with Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE) as process:
+            try:
+                self.logger.info('[COMMAND] ' + cmd)
+                stdout, stderr = process.communicate(timeout=timeout)
+                exitcode = process.wait(timeout=timeout)
+                response = exitcode, stdout, stderr
+                return ResponseParser(response, logger_enabled=self.logger_enabled)
+
+            except TimeoutExpired as err:
+                process.kill()
+                self.logger.error('Timeout exception: ' + str(err))
+                raise err
 
     @staticmethod
     def exists(path) -> bool:
