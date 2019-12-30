@@ -31,7 +31,8 @@ setup(
     ],
     install_requires=[
         'pywinrm>=0.4.1',
-        'requests-credssp>=1.1.1', 'requests'
+        'requests-credssp>=1.1.1',
+        'requests>=2.22.0'
     ],
     python_requires='>=3.6',
 )
