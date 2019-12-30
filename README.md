@@ -1,12 +1,12 @@
 # PyWinOS
-The cross-platform tool to work with remote Windows OS.
+The cross-platform tool to work with remote and local Windows OS.
 
 PyWinOS uses the Windows Remote Manager (WinRM) service. It can establish connection to a remote server based on Windows OS and execute commands:
 - PowerShell
 - Command line
 - WMI.
 
-It can execute command-line locally too.
+It can execute commands locally using subprocess and command-line too.
 
 For more information on WinRM, please visit [Microsoft’s WinRM site](https://docs.microsoft.com/en-us/windows/win32/winrm/portal?redirectedfrom=MSDN)
 It based on [pywinrm](https://pypi.org/project/pywinrm/).

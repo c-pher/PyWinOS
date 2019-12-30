@@ -9,13 +9,13 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pywinos',
-    version='1.0.0',
+    version='1.0.1',
     packages=['pywinos'],
     url='https://github.com/agegemon/PyWinOS',
     license='MIT',
     author='Andrey Komissarov',
     author_email='a.komisssarov@gmail.com',
-    description='The cross-platform tool to execute PowerShell and command line remotely.',
+    description='The cross-platform tool to execute PowerShell and command line remotely and locally.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     classifiers=[
