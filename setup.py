@@ -35,5 +35,5 @@ setup(
         'requests-credssp>=1.1.1',
         'requests>=2.22.0'
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )

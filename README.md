@@ -1,5 +1,5 @@
+[![Build Status](https://travis-ci.org/agegemon/PyWinOS.svg?branch=travis)](https://travis-ci.org/agegemon/PyWinOS)
 [![Coverage Status](https://coveralls.io/repos/github/agegemon/PyWinOS/badge.svg?branch=master)](https://coveralls.io/github/agegemon/PyWinOS?branch=master)
-
 
 # PyWinOS
 The cross-platform tool to work with remote and local Windows OS.
