@@ -11,7 +11,8 @@ def response_cmd_local_err():
     return (
         1,
         b'',
-        b"'whoami1' is not recognized as an internal or external command,\r\noperable program or batch file.\r\n"
+        b"'whoami1' is not recognized as an internal or external command,\r\n"
+        b"operable program or batch file.\r\n"
     )
 
 
@@ -34,7 +35,8 @@ def create_response_class():
             if self.positive:
                 return b''
             return (
-                b"'whoami1' is not recognized as an internal or external command,\r\n"
+                b"'whoami1' is not recognized as an internal or "
+                b"external command,\r\n"
                 b"operable program or batch file.\r\n")
 
         @property

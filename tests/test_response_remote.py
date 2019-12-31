@@ -24,7 +24,8 @@ class TestResponseRemote:
 
     def test_stderr_err(self, response_cmd_remote_err):
         response = ResponseParser(response_cmd_remote_err)
-        assert response.stderr, 'STDERR is null. Must contain entries about error'
+        assert response.stderr, ('STDERR is null. '
+                                 'It must contain entries about error')
 
     def test_exited(self, response_cmd_remote):
         response = ResponseParser(response_cmd_remote)

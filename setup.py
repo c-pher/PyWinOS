@@ -15,7 +15,8 @@ setup(
     license='MIT',
     author='Andrey Komissarov',
     author_email='a.komisssarov@gmail.com',
-    description='The cross-platform tool to execute PowerShell and command line remotely and locally.',
+    description='The cross-platform tool to execute PowerShell '
+                'and command line remotely and locally.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     classifiers=[
