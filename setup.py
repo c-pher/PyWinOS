@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pywinos',
-    version='1.0.1',
+    version='1.0.1.post1',
     packages=['pywinos'],
     url='https://github.com/agegemon/PyWinOS',
     license='MIT',
