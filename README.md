@@ -32,7 +32,7 @@ from pywinos import WinOSClient
 from pywinos import WinOSClient
 
 tool = WinOSClient(host='172.16.0.126', username='administrator', password='rds123RDS', logger_enabled=True)
-response = tool.run_cmd('$PSVersionTable.PSVersion')
+response = tool.run_ps('$PSVersionTable.PSVersion')
 
 print(response)  
 # ResponseParser(response=(0, 'Major  Minor  Build  Revision\r\n-----  -----  -----  --------\r\n5      1      17763  592', None, '$PSVersionTable.PSVersion'))
@@ -41,7 +41,9 @@ print(response.stdout)
 # Major  Minor  Build  Revision
 # -----  -----  -----  --------
 # 5      1      17763  592
-print(response.stderr)  # None
+
+# stderr in PowerShell contains some text by default    
+print(response.stderr)  # <Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Ob...
 print(response.ok)  # True
 ```
 

@@ -1,8 +1,12 @@
+import hashlib
 import logging
 import os
 import platform
+import shutil
 import socket
+import zipfile
 from dataclasses import dataclass
+from datetime import datetime
 from subprocess import Popen, PIPE, TimeoutExpired
 
 import winrm
@@ -299,6 +303,171 @@ class WinOSClient(Logger):
         """
 
         return os.path.exists(path)
+
+    @staticmethod
+    def get_hostname_ip() -> tuple:
+        """Get tuple of IP and hostname"""
+
+        host_name = socket.gethostname()
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        return s.getsockname()[0], host_name
+
+    @staticmethod
+    def search(directory, ends=None, starts=None, filter_=None) -> list:
+        """Search for file(s)
+
+        :param directory: Root directory to search
+        :param ends: Ends with
+        :param starts: Start with
+        :param filter_: Search files by containing
+        :return: list of files
+        """
+
+        result = []
+        for file in os.listdir(directory):
+            file_path = os.path.join(directory, file)
+
+            if ends:
+                if file_path.endswith(ends):
+                    result.append(file)
+            elif starts:
+                if file_path.startswith(starts):
+                    result.append(file)
+            elif filter_:
+                if filter_ in file_path:
+                    result.append(file)
+
+        return result
+
+    def get_last_file(self, path, prefix='', ends=''):
+        """Get last file from specified directory
+
+        :param path: Full path to the share (directory)
+        :param prefix: Prefix
+        :param ends:
+        :return:
+        """
+
+        all_builds = [
+            os.path.join(path, file) for file in os.listdir(path) if
+            os.path.isfile(os.path.join(path, file)) and
+            file.startswith(prefix) and file.endswith(ends)
+        ]
+
+        try:
+            last_build = max(all_builds, key=os.path.getctime)
+            return os.path.basename(last_build)
+        except ValueError as err:
+            self.logger.error(f'{err}. Maybe file with specified criteria not found.')
+            return 'File not found. Try another search parameters.'
+
+    @staticmethod
+    def get_absolute_path():
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    @staticmethod
+    def get_md5(file):
+        """
+        Open file and calculate MD5
+
+        :param file: Full file path
+        :type file: str
+        :return: File's MD5 hash
+        """
+
+        with open(file, 'rb') as f:
+            m = hashlib.md5()
+            while True:
+                data = f.read(8192)
+                if not data:
+                    break
+                m.update(data)
+            return m.hexdigest()
+
+    @staticmethod
+    def clean_directory(path):
+        """Clean (remove) all files from a windows directory"""
+
+        try:
+            for the_file in os.listdir(path):
+                file_path = os.path.join(path, the_file)
+                basename = os.path.basename(file_path)
+
+                if os.path.isfile(file_path):
+                    if basename != 'pagefile.sys':
+                        os.remove(file_path)
+                elif os.path.isdir(file_path):
+                    if basename != 'System Volume Information':
+                        shutil.rmtree(file_path)
+            return True
+        except OSError as e:
+            print(f'The user name or password to {path} is incorrect', e)
+            raise e
+
+    def copy_files(self, source, destination, new_name=None):
+        """Copy file to a remote windows directory. Creates destination directory if does not exist.
+
+        :param source: Source file to copy
+        :param destination: Destination directory.
+        :param new_name: Copy file with a new name if specified.
+        :return: Check copied file exists
+        """
+
+        # Get full destination path
+        dst_full = os.path.join(destination, new_name) if new_name else destination
+
+        # Create directory
+        dir_name = os.path.dirname(dst_full) if new_name else destination
+        self.create_directory(dir_name)
+
+        try:
+            shutil.copy(source, dst_full)
+        except FileNotFoundError as err:
+            self.logger.error(f'ERROR occurred during file copy. {err}')
+            raise err
+
+        return self.exists(dst_full)
+
+    @staticmethod
+    def unzip(path_to_zip_file, target_directory=None):
+        """
+        Extract .zip archive to destination folder
+        Creates destination folder if it does not exist
+        """
+
+        directory_to_extract_to = target_directory
+
+        if not target_directory:
+            directory_to_extract_to = os.path.dirname(path_to_zip_file)
+
+        with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
+            zip_ref.extractall(directory_to_extract_to)
+        print('Unzipped to:', directory_to_extract_to)
+
+        return target_directory
+
+    def create_directory(self, path):
+        """Create directory. No errors if it already exists."""
+
+        os.makedirs(path, exist_ok=True)
+
+        return self.exists(path)
+
+    @staticmethod
+    def timestamp(sec=False):
+        """Get time stamp"""
+
+        if sec:
+            return datetime.now().strftime('%Y%m%d_%H%M%S')
+        return datetime.now().strftime('%Y%m%d_%H%M')
+
+    @staticmethod
+    def ping_host(ip, packets_number=4):
+        response = os.system(f'ping -n {packets_number} {ip}')
+        if response:
+            return False
+        return True
 
     def debug_info(self):
         self.logger.info('Linux client created')
