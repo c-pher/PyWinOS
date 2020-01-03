@@ -540,12 +540,21 @@ class WinOSClient(Logger):
             return datetime.now().strftime('%Y%m%d_%H%M%S')
         return datetime.now().strftime('%Y%m%d_%H%M')
 
-    @staticmethod
-    def ping(ip: str, packets_number: int = 4):
-        response = os.system(f'ping -n {packets_number} {ip}')
-        if response:
-            return False
-        return True
+    def ping(self, host: str = '', packets_number: int = 4):
+        """Ping remote host
+
+        :param host: IP address to ping. Used host IP from init by default
+        :param packets_number: Number of packets. 4 by default
+        """
+
+        counter = 'c'
+        if self.get_current_os_name() == 'Windows':
+            counter = 'n'
+
+        ip_ = host if host else self.host
+
+        command = f'ping -{counter} {packets_number} {ip_}'
+        return self._run_local(cmd=command)
 
     @staticmethod
     def get_service(name: str):
@@ -573,6 +582,10 @@ class WinOSClient(Logger):
     @staticmethod
     def get_file_version(path: str):
         """Get local windows file version from file property
+
+        Windows only.
+
+        pip install pywin32
 
         :param path: Full path to the file
         :return: 51.1052.0.0
