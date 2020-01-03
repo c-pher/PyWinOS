@@ -1,3 +1,4 @@
+[![GitHub version](https://badge.fury.io/gh/c-pher%2FPyWinOS.svg)](https://badge.fury.io/gh/c-pher%2FPyWinOS)
 [![Build Status](https://travis-ci.org/c-pher/PyWinOS.svg?branch=master)](https://travis-ci.org/agegemon/PyWinOS)
 [![Coverage Status](https://coveralls.io/repos/github/c-pher/PyWinOS/badge.svg?branch=master)](https://coveralls.io/github/agegemon/PyWinOS?branch=master)
 
