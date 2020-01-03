@@ -338,13 +338,22 @@ class WinOSClient(Logger):
         return os.path.exists(path)
 
     @staticmethod
-    def get_local_hostname_ip() -> tuple:
-        """Get tuple of local IP and hostname"""
+    def get_local_hostname_ip():
+        """Get local IP and hostname
+
+        :return: Object with "ip" and "hostname" properties
+        """
 
         host_name = socket.gethostname()
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
-        return s.getsockname()[0], host_name
+        return type(
+            'HostnameIP', (),
+            {
+                'ip': s.getsockname()[0],
+                'hostname': host_name
+            }
+        )
 
     @staticmethod
     def search(directory: str, ends=None, starts=None, filter_=None) -> list:
