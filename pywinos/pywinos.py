@@ -168,6 +168,10 @@ class WinOSClient(Logger):
         index = methods.index('list_all_methods') + 1
         return methods[index:]
 
+    def __local(self):
+        return not self.host or self.host == 'localhost' \
+               or self.host == '127.0.0.1'
+
     def is_host_available(
             self,
             port: int = 5985,
@@ -177,6 +181,9 @@ class WinOSClient(Logger):
 
         Port 5985 used by default
         """
+
+        if self.__local():
+            return True
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.settimeout(timeout)
@@ -278,8 +285,7 @@ class WinOSClient(Logger):
         :return: Object with exit code, stdout and stderr
         """
 
-        if not self.host or self.host == 'localhost' \
-                or self.host == '127.0.0.1':
+        if self.__local():
             return self._run_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
@@ -326,6 +332,14 @@ class WinOSClient(Logger):
         """Returns current OS name"""
 
         return platform.system()
+
+    @property
+    def is_windows(self):
+        return self.get_current_os_name() == 'Windows'
+
+    @property
+    def is_linux(self):
+        return self.get_current_os_name() == 'Linux'
 
     @staticmethod
     def exists(path: str) -> bool:
@@ -425,8 +439,10 @@ class WinOSClient(Logger):
             return 'File not found. Try another search parameters.'
 
     @staticmethod
-    def get_absolute_path():
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    def get_absolute_path(path):
+        """Returns absolute file path"""
+
+        return os.path.abspath(path)
 
     @staticmethod
     def get_md5(file: str):
