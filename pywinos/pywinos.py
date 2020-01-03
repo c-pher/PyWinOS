@@ -125,15 +125,16 @@ class WinOSClient(Logger):
     """The cross-platform tool to work with remote and local Windows OS.
 
     Returns response object with exit code, sent command, stdout/sdtderr.
+    Check response methods.
     """
 
     _URL = 'https://pypi.org/project/pywinrm/'
 
     def __init__(
             self,
-            host: str = '',
-            username: str = '',
-            password: str = '',
+            host: str = "",
+            username: str = "",
+            password: str = "",
             logger_enabled: bool = True,
             *args, **kwargs):
         super().__init__(
