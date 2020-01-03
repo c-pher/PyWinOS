@@ -14,7 +14,7 @@ It can execute commands locally using subprocess and command-line too.
 For more information on WinRM, please visit [Microsoft’s WinRM site](https://docs.microsoft.com/en-us/windows/win32/winrm/portal?redirectedfrom=MSDN)
 It based on [pywinrm](https://pypi.org/project/pywinrm/).
 
-PyWinOS returns object with exit code, sent command, stdout/sdtderr response.
+PyWinOS returns object with **exit code, sent command, stdout/sdtderr** response.
 
 ## Installation
 For most users, the recommended method to install is via pip:
@@ -78,3 +78,23 @@ print(response.exited)  # 0
 print(response.stdout)  # my_pc\bobby
 print(response.stderr)  # None
 print(response.ok)  # True
+```
+
+## Helpful methods
+
+- list_all_methods
+- is_host_available
+- get_current_os_name
+- get_hostname_ip
+- search
+- get_last_file
+- get_absolute_path
+- get_md5
+- clean_directory
+- copy
+- unzip
+- create_directory
+- timestamp
+- ping_host
+- debug_info
+...

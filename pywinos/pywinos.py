@@ -4,6 +4,7 @@ import os
 import platform
 import shutil
 import socket
+import sys
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
@@ -121,6 +122,11 @@ class ResponseParser(Logger):
 
 
 class WinOSClient(Logger):
+    """The cross-platform tool to work with remote and local Windows OS.
+
+    Returns response object with exit code, sent command, stdout/sdtderr.
+    """
+
     _URL = 'https://pypi.org/project/pywinrm/'
 
     def __init__(
@@ -149,8 +155,20 @@ class WinOSClient(Logger):
             f'Password: {self.password}'
         )
 
-    def is_host_available(self, port: int = 5985, timeout: int = 5):
-        """Check remote host is available using specified port"""
+    def list_all_methods(self):
+        """Returns all available public methods"""
+
+        return [method for method in dir(self) if not method.startswith('_')]
+
+    def is_host_available(
+            self,
+            port: int = 5985,
+            timeout: int = 5
+    ) -> bool:
+        """Check remote host is available using specified port.
+
+        Port 5985 used by default
+        """
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.settimeout(timeout)
@@ -161,12 +179,14 @@ class WinOSClient(Logger):
 
     @staticmethod
     def get_current_os_name():
+        """Returns current OS name"""
+
         return platform.system()
 
     # ---------- Remote section ----------
     @property
     def session(self):
-        """Create connection to a remote server"""
+        """Create WinRM session connection to a remote server"""
 
         session = winrm.Session(self.host, auth=(self.username, self.password))
         return session
@@ -194,8 +214,7 @@ class WinOSClient(Logger):
             cmd: bool = False,
             use_cred_ssp: bool = False,
             *args) -> ResponseParser:
-        """
-        The client to send PowerShell or command-line commands
+        """The client to send PowerShell or command-line commands
 
         :param command: Command to execute
         :param ps: Specify if PowerShel is used
@@ -252,7 +271,7 @@ class WinOSClient(Logger):
         :param command: command
         :param args: additional command arguments
         :param timeout: timeout
-        :return: ResponseParser object
+        :return: Object with exit code, stdout and stderr
         """
 
         if not self.host or self.host == 'localhost' \
@@ -260,12 +279,12 @@ class WinOSClient(Logger):
             return self._client_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
-    def run_ps(self, command, use_cred_ssp: bool = False):
-        """Allows to execute PowerShell command or script using a remote shell
+    def run_ps(self, command, use_cred_ssp: bool = False) -> ResponseParser:
+        """Allows to execute PowerShell command or script using a remote shell.
 
         :param command: Command
-        :param use_cred_ssp:
-        :return:
+        :param use_cred_ssp: Use CredSSP
+        :return: Object with exit code, stdout and stderr
         """
 
         return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
@@ -359,7 +378,8 @@ class WinOSClient(Logger):
             last_build = max(all_builds, key=os.path.getctime)
             return os.path.basename(last_build)
         except ValueError as err:
-            self.logger.error(f'{err}. Maybe file with specified criteria not found.')
+            self.logger.error(f'{err}. '
+                              f'Maybe file with specified criteria not found.')
             return 'File not found. Try another search parameters.'
 
     @staticmethod
@@ -405,8 +425,10 @@ class WinOSClient(Logger):
             print(f'The user name or password to {path} is incorrect', e)
             raise e
 
-    def copy_files(self, source, destination, new_name=None):
-        """Copy file to a remote windows directory. Creates destination directory if does not exist.
+    def copy(self, source, destination, new_name=None):
+        """Copy file to a remote windows directory.
+
+        Creates destination directory if does not exist.
 
         :param source: Source file to copy
         :param destination: Destination directory.
@@ -415,7 +437,10 @@ class WinOSClient(Logger):
         """
 
         # Get full destination path
-        dst_full = os.path.join(destination, new_name) if new_name else destination
+        dst_full = (os.path.join(destination, new_name)
+                    if new_name
+                    else
+                    destination)
 
         # Create directory
         dir_name = os.path.dirname(dst_full) if new_name else destination
@@ -476,3 +501,4 @@ class WinOSClient(Logger):
         self.logger.info(f'Username: {self.username}')
         self.logger.info(f'Password: {self.password}')
         self.logger.info(f'Available: {self.is_host_available()}')
+        self.logger.info(sys.version)

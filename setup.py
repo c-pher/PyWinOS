@@ -1,4 +1,3 @@
-# read the contents of your README file
 from os import path
 
 from setuptools import setup
@@ -9,9 +8,9 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pywinos',
-    version='1.0.1.post1',
+    version='1.0.2',
     packages=['pywinos'],
-    url='https://github.com/agegemon/PyWinOS',
+    url='https://github.com/c-pher/PyWinOS.git',
     license='MIT',
     author='Andrey Komissarov',
     author_email='a.komisssarov@gmail.com',
