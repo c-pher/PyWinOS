@@ -1,3 +1,4 @@
+import fileinput
 import hashlib
 import logging
 import os
@@ -10,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from subprocess import Popen, PIPE, TimeoutExpired
 
+import psutil
 import winrm
 from requests.exceptions import ConnectionError
 from winrm import Protocol
@@ -159,7 +161,12 @@ class WinOSClient(Logger):
     def list_all_methods(self):
         """Returns all available public methods"""
 
-        return [method for method in dir(self) if not method.startswith('_')]
+        methods = [
+            method for method in self.__dir__()
+            if not method.startswith('_')
+        ]
+        index = methods.index('list_all_methods') + 1
+        return methods[index:]
 
     def is_host_available(
             self,
@@ -178,12 +185,6 @@ class WinOSClient(Logger):
             self.logger.info(f'{self.host} is available: {result}')
             return result
 
-    @staticmethod
-    def get_current_os_name():
-        """Returns current OS name"""
-
-        return platform.system()
-
     # ---------- Remote section ----------
     @property
     def session(self):
@@ -192,7 +193,7 @@ class WinOSClient(Logger):
         session = winrm.Session(self.host, auth=(self.username, self.password))
         return session
 
-    def _protocol(self, endpoint, transport):
+    def _protocol(self, endpoint: str, transport: str):
         """Create Protocol using low-level API"""
 
         session = self.session
@@ -210,7 +211,7 @@ class WinOSClient(Logger):
 
     def _client(
             self,
-            command,
+            command: str,
             ps: bool = False,
             cmd: bool = False,
             use_cred_ssp: bool = False,
@@ -218,7 +219,7 @@ class WinOSClient(Logger):
         """The client to send PowerShell or command-line commands
 
         :param command: Command to execute
-        :param ps: Specify if PowerShel is used
+        :param ps: Specify if PowerShell is used
         :param cmd: Specify if command-line is used
         :param use_cred_ssp: Specify if CredSSP is used
         :param args: Arguments for command-line
@@ -262,7 +263,9 @@ class WinOSClient(Logger):
             self.logger.error('Try to use "run_cmd_local" method instead.')
             raise err
 
-    def run_cmd(self, command, timeout: int = 60, *args) -> ResponseParser:
+    def run_cmd(
+            self, command: str, timeout: int = 60, *args
+    ) -> ResponseParser:
         """
         Allows to execute cmd command on a remote server.
 
@@ -277,10 +280,12 @@ class WinOSClient(Logger):
 
         if not self.host or self.host == 'localhost' \
                 or self.host == '127.0.0.1':
-            return self._client_local(command, timeout)
+            return self._run_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
-    def run_ps(self, command, use_cred_ssp: bool = False) -> ResponseParser:
+    def run_ps(
+            self, command: str, use_cred_ssp: bool = False
+    ) -> ResponseParser:
         """Allows to execute PowerShell command or script using a remote shell.
 
         :param command: Command
@@ -291,8 +296,10 @@ class WinOSClient(Logger):
         return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
 
     # ---------- Local section ----------
-    def _client_local(self, cmd, timeout=60):
-        """Main function to send command-line commands using subprocess LOCALLY
+    def _run_local(self, cmd: str, timeout: int = 60):
+        """Main function to send commands using subprocess LOCALLY.
+
+        Used command-line (cmd.exe or bash)
 
         :param cmd: string, command
         :param timeout: timeout for command
@@ -315,7 +322,13 @@ class WinOSClient(Logger):
                 raise err
 
     @staticmethod
-    def exists(path) -> bool:
+    def get_current_os_name():
+        """Returns current OS name"""
+
+        return platform.system()
+
+    @staticmethod
+    def exists(path: str) -> bool:
         """Check file/directory exists
 
         :param path: Full path. Can be network path. Share must be attached!
@@ -325,8 +338,8 @@ class WinOSClient(Logger):
         return os.path.exists(path)
 
     @staticmethod
-    def get_hostname_ip() -> tuple:
-        """Get tuple of IP and hostname"""
+    def get_local_hostname_ip() -> tuple:
+        """Get tuple of local IP and hostname"""
 
         host_name = socket.gethostname()
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -334,7 +347,7 @@ class WinOSClient(Logger):
         return s.getsockname()[0], host_name
 
     @staticmethod
-    def search(directory, ends=None, starts=None, filter_=None) -> list:
+    def search(directory: str, ends=None, starts=None, filter_=None) -> list:
         """Search for file(s)
 
         :param directory: Root directory to search
@@ -360,23 +373,42 @@ class WinOSClient(Logger):
 
         return result
 
-    def get_last_file(self, path, prefix='', ends=''):
-        """Get last file from specified directory
+    @staticmethod
+    def list_dir(path: str, prefix: str = '', ends: str = ''):
+        """Get dir list"""
 
-        :param path: Full path to the share (directory)
-        :param prefix: Prefix
-        :param ends:
-        :return:
-        """
-
-        all_builds = [
+        return [
             os.path.join(path, file) for file in os.listdir(path) if
             os.path.isfile(os.path.join(path, file)) and
             file.startswith(prefix) and file.endswith(ends)
         ]
 
+    def sort_files(self, path: str, prefix: str = '', ends: str = '') -> list:
+        """Sort files in a directory by ctime (modification time)
+
+        :param path: Full path to the share (directory)
+        :param prefix: Prefix
+        :param ends: File end filter
+        :return: List of sorted files name by ctime
+        """
+
+        files = self.list_dir(path, prefix, ends)
+        files.sort(key=os.path.getctime, reverse=True)
+        return files
+
+    def get_last_file_name(self, path: str, prefix: str = '', ends: str = ''):
+        """Get last file from specified directory
+
+        :param path: Full path to the share (directory)
+        :param prefix: Prefix
+        :param ends: File end filter
+        :return: Last file name by ctime
+        """
+
+        all_files = self.list_dir(path, prefix, ends)
+
         try:
-            last_build = max(all_builds, key=os.path.getctime)
+            last_build = max(all_files, key=os.path.getctime)
             return os.path.basename(last_build)
         except ValueError as err:
             self.logger.error(f'{err}. '
@@ -388,7 +420,7 @@ class WinOSClient(Logger):
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     @staticmethod
-    def get_md5(file):
+    def get_md5(file: str):
         """
         Open file and calculate MD5
 
@@ -407,8 +439,11 @@ class WinOSClient(Logger):
             return m.hexdigest()
 
     @staticmethod
-    def clean_directory(path):
-        """Clean (remove) all files from a windows directory"""
+    def clean_directory(path: str):
+        """Clean (remove) all files from a windows directory
+
+        :param path: Full file\\directory path
+        """
 
         try:
             for the_file in os.listdir(path):
@@ -426,7 +461,24 @@ class WinOSClient(Logger):
             print(f'The user name or password to {path} is incorrect', e)
             raise e
 
-    def copy(self, source, destination, new_name=None):
+    @staticmethod
+    def remove(path: str) -> bool:
+        """Remove file or directory recursively
+
+        :param path: Full file\\directory path
+        """
+
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)
+            return True
+        except OSError as e:
+            print(f'The user name or password to {path} is incorrect', e)
+            return False
+
+    def copy(self, source: str, destination: str, new_name=None):
         """Copy file to a remote windows directory.
 
         Creates destination directory if does not exist.
@@ -456,7 +508,7 @@ class WinOSClient(Logger):
         return self.exists(dst_full)
 
     @staticmethod
-    def unzip(path_to_zip_file, target_directory=None):
+    def unzip(path_to_zip_file: str, target_directory=None):
         """
         Extract .zip archive to destination folder
         Creates destination folder if it does not exist
@@ -473,7 +525,7 @@ class WinOSClient(Logger):
 
         return target_directory
 
-    def create_directory(self, path):
+    def create_directory(self, path: str):
         """Create directory. No errors if it already exists."""
 
         os.makedirs(path, exist_ok=True)
@@ -481,7 +533,7 @@ class WinOSClient(Logger):
         return self.exists(path)
 
     @staticmethod
-    def timestamp(sec=False):
+    def timestamp(sec: bool = False):
         """Get time stamp"""
 
         if sec:
@@ -489,11 +541,80 @@ class WinOSClient(Logger):
         return datetime.now().strftime('%Y%m%d_%H%M')
 
     @staticmethod
-    def ping_host(ip, packets_number=4):
+    def ping(ip: str, packets_number: int = 4):
         response = os.system(f'ping -n {packets_number} {ip}')
         if response:
             return False
         return True
+
+    @staticmethod
+    def get_service(name: str):
+        """Check windows local service status"""
+
+        try:
+            service = psutil.win_service_get(name)
+            service = service.as_dict()
+        except Exception as err:
+            raise err
+
+        return service
+
+    @staticmethod
+    def get_process():
+        """Check windows local process status"""
+
+        return psutil.process_iter()
+
+    def is_process_running(self, name: str) -> bool:
+        """Check local windows process is running"""
+
+        return name in (p.name() for p in self.get_process())
+
+    @staticmethod
+    def get_file_version(path: str):
+        """Get local windows file version from file property
+
+        :param path: Full path to the file
+        :return: 51.1052.0.0
+        """
+
+        exists = os.path.exists(path)
+        if exists:
+            from win32com.client import Dispatch
+            ver_parser = Dispatch('Scripting.FileSystemObject')
+            return ver_parser.GetFileVersion(path)
+        else:
+            return 'File not found'
+
+    def get_file_size(self, path: str):
+        """Get local windows file size
+
+        :param path: Full path to the file
+        :return:
+        """
+
+        try:
+            return os.path.getsize(path)
+        except FileNotFoundError as err:
+            self.logger.error(f'File not found. {err}')
+            raise err
+
+    @staticmethod
+    def replace_text(path: str, old_text: str, new_text: str,
+                     backup: str = '.bak'):
+        """Replace all string mansion with a new string
+
+        :param path: Full file path
+        :param old_text: Text to replace
+        :param new_text: Replacements text
+        :param backup: Create backup file with specified extension in
+        a current directory.
+        Use blank string "" if you do
+        """
+
+        with fileinput.FileInput(path, inplace=True, backup=backup) as file:
+            for line in file:
+                print(line.replace(old_text, new_text), end='')
 
     def debug_info(self):
         self.logger.info('Linux client created')

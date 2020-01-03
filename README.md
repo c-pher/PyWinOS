@@ -80,7 +80,8 @@ print(response.stderr)  # None
 print(response.ok)  # True
 ```
 
-## Helpful methods
+## Helpful methods to work with local Windows OS 
+(some method will work on Linux too. But it is necessary to test)
 
 - list_all_methods
 - is_host_available
@@ -90,11 +91,28 @@ print(response.ok)  # True
 - get_last_file
 - get_absolute_path
 - get_md5
-- clean_directory
 - copy
 - unzip
+- exists
 - create_directory
+- clean_directory
 - timestamp
-- ping_host
+- ping
 - debug_info
+- copy
+- get_file_size
+- get_file_version
+- get_last_file_name
+- get_local_hostname_ip
+- get_md5
+- get_process
+- get_service
+- is_host_available
+- is_process_running
+- list_dir
+- remove
+- replace_text
+- search
+- sort_files
+
 ...

@@ -1,6 +1,17 @@
+import os
 from os import path
 
 from setuptools import setup
+
+INSTALL_REQUIRES = [
+    'pywinrm>=0.4.1',
+    'requests-credssp>=1.1.1',
+    'requests>=2.22.0',
+    'psutil'
+]
+
+if os.name == 'nt':
+    INSTALL_REQUIRES.append('pywin32')
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
@@ -29,10 +40,6 @@ setup(
         'Topic :: System :: Systems Administration',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    install_requires=[
-        'pywinrm>=0.4.1',
-        'requests-credssp>=1.1.1',
-        'requests>=2.22.0'
-    ],
+    install_requires=INSTALL_REQUIRES,
     python_requires='>=3.7',
 )
