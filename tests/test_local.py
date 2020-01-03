@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -17,8 +18,12 @@ def test_run_cmd_invalid_command():
     response = tool.run_cmd('whoamia')
     assert not response.ok, 'Response is OK. Must be False'
     assert not response.stdout, 'STDOUT is not empty. Must be empty'
-    assert 'is not recognized as an internal' in response.stderr, \
-        'Response is OK. Must be False'
+
+    if os.name == 'nt':
+        assert 'is not recognized as an internal' in response.stderr, \
+            'Response is OK. Must be False'
+    else:
+        assert 'whoamia: not found' in response.stderr
 
 
 def test_get_local_hostname_ip():
