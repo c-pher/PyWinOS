@@ -6,6 +6,7 @@ import platform
 import shutil
 import socket
 import sys
+import warnings
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
@@ -23,6 +24,7 @@ from winrm.exceptions import (InvalidCredentialsError,
 __author__ = 'Andrey Komissarov'
 __email__ = 'a.komisssarov@gmail.com'
 __date__ = '12.2019'
+__version__ = '1.0.3'
 
 
 @dataclass
@@ -157,6 +159,10 @@ class WinOSClient(Logger):
             f'Username: {self.username}\n'
             f'Password: {self.password}'
         )
+
+    @property
+    def version(self):
+        return __version__
 
     def list_all_methods(self):
         """Returns all available public methods"""
@@ -604,8 +610,7 @@ class WinOSClient(Logger):
 
         return name in (p.name() for p in self.get_process())
 
-    @staticmethod
-    def get_file_version(path: str):
+    def get_file_version(self, path: str):
         """Get local windows file version from file property
 
         Windows only.
@@ -618,7 +623,13 @@ class WinOSClient(Logger):
 
         exists = os.path.exists(path)
         if exists:
-            from win32com.client import Dispatch
+            try:
+                from win32com.client import Dispatch
+            except ModuleNotFoundError as err:
+                warnings.warn('To use this method use "pip install pywin32". Windows only.')
+                self.logger.warning('To use this method perform "pip install pywin32"')
+                raise err
+
             ver_parser = Dispatch('Scripting.FileSystemObject')
             return ver_parser.GetFileVersion(path)
         else:
