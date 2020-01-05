@@ -1,6 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/pywinos.svg)](https://badge.fury.io/py/pywinos)
-[![Build Status](https://travis-ci.org/c-pher/PyWinOS.svg?branch=master)](https://travis-ci.org/agegemon/PyWinOS)
-[![Coverage Status](https://coveralls.io/repos/github/c-pher/PyWinOS/badge.svg?branch=master)](https://coveralls.io/github/agegemon/PyWinOS?branch=master)
+[![Build Status](https://travis-ci.org/c-pher/PyWinOS.svg?branch=master)](https://travis-ci.org/c-pher/PyWinOS)
+[![Coverage Status](https://coveralls.io/repos/github/c-pher/PyWinOS/badge.svg?branch=master)](https://coveralls.io/github/c-pher/PyWinOS?branch=master)
 
 # PyWinOS
 The cross-platform tool to work with remote and local Windows OS.
@@ -27,13 +27,13 @@ pip install PyWinOS
 from pywinos import WinOSClient
 ```
 ---
-## Usage (remote)
-#### PowerShell:
+## Usage (remote server)
+#### Run PowerShell:
 ```python
 from pywinos import WinOSClient
 
 tool = WinOSClient(host='172.16.0.126', username='administrator', password='rds123RDS', logger_enabled=True)
-response = tool.run_ps('$PSVersionTable.PSVersion')
+response = tool.run_ps(command='$PSVersionTable.PSVersion')
 
 print(response)  
 # ResponseParser(response=(0, 'Major  Minor  Build  Revision\r\n-----  -----  -----  --------\r\n5      1      17763  592', None, '$PSVersionTable.PSVersion'))
@@ -48,12 +48,12 @@ print(response.stderr)  # <Objs Version="1.1.0.1" xmlns="http://schemas.microsof
 print(response.ok)  # True
 ```
 
-#### Command line:
+#### Run command line:
 ```python
 from pywinos import WinOSClient
 
 tool = WinOSClient('172.16.0.126', 'administrator', 'P@ssw0rd', logger_enabled=False)
-response = tool.run_cmd('whoami')
+response = tool.run_cmd(command='whoami')
 
 print(response)  # <Response code 0, out "b'\r\nMajor  Minor  Buil'", err "b''">
 print(response.exited)  # 0
@@ -63,8 +63,8 @@ print(response.ok)  # True
 
 ```
 
-## Usage (local)
-#### Command line:
+## Usage (local server)
+#### Run command line:
 ```python
 from pywinos import WinOSClient
 
@@ -72,7 +72,7 @@ tool = WinOSClient(logger_enabled=False)
 # tool = WinOSClient(host='', logger_enabled=False)
 # tool = WinOSClient(host='localhost', logger_enabled=False)
 # tool = WinOSClient(host='127.0.0.1', logger_enabled=False)
-response = tool.run_cmd('whoami')
+response = tool.run_cmd(command='whoami')
 
 print(response)  # (0, b'mypc\\bobby\r\n', b'')
 print(response.exited)  # 0
@@ -81,39 +81,38 @@ print(response.stderr)  # None
 print(response.ok)  # True
 ```
 
-## Helpful methods to work with local Windows OS 
-(some method will work on Linux too. But it is necessary to test)
+## Helpful predefined methods to work with local Windows OS
 
-- list_all_methods
-- is_host_available
-- get_current_os_name
-- get_hostname_ip
-- search
-- get_last_file
-- get_absolute_path
-- get_md5
-- copy
-- unzip
-- exists
-- create_directory
-- clean_directory
-- timestamp
-- ping
-- debug_info
-- copy
-- get_file_size
-- get_file_version
-- get_last_file_name
-- get_local_hostname_ip
-- get_md5
-- get_process
-- get_service
-- is_host_available
-- is_process_running
-- list_dir
-- remove
-- replace_text
-- search
-- sort_files
+* list_all_methods
+* is_host_available
+* get_current_os_name
+* get_hostname_ip
+* search
+* get_absolute_path
+* get_md5
+* copy
+* unzip
+* remove
+* exists (can check file existing on remote attached network share too)
+* list_dir
+* create_directory
+* clean_directory
+* sort_files (list directory and returns sorted files)
+* timestamp
+* ping
+* get_file_size
+* get_file_version
+* get_last_file_name
+* replace_text (replace text in file)
+* get_local_hostname_ip
+* get_process
+* get_service
+* is_process_running
+* debug_info (service method to get useful env info)
 
 ...
+-
+### NOTE
+Main methods (**run_ps** and **run_cmd**) are OS independent. 
+
+But there are some methods works only on Windows. e.g. "get_file_version" depends on **pywin32** that available on Windows only.
