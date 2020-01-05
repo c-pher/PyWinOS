@@ -4,7 +4,6 @@ from pywinos import WinOSClient
 def test_is_host_available_remote():
     tool = WinOSClient('8.8.8.8')
     response = tool.is_host_available(port=53)
-    print(response)
     assert response, 'Response is not True'
 
 

@@ -63,9 +63,9 @@ class Logger:
             self.logger.addHandler(fh)  # Add the handlers to the logger
 
 
-class SuppressFilter(logging.Filter):
-    def filter(self, record):
-        return 'wsman' not in record.getMessage()
+# class SuppressFilter(logging.Filter):
+#     def filter(self, record):
+#         return 'wsman' not in record.getMessage()
 
 
 class ResponseParser(Logger):
