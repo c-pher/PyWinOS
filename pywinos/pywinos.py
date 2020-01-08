@@ -34,7 +34,7 @@ class Logger:
     file: bool = False
     date_format: str = '%Y-%m-%d %H:%M:%S'
     format: str = ('%(asctime)-15s '
-                   '%(name)s] '
+                   '[%(name)s] '
                    '[LINE:%(lineno)d] '
                    '[%(levelname)s] '
                    '%(message)s')
@@ -61,11 +61,6 @@ class Logger:
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(self.formatter)  # Add the formatter
             self.logger.addHandler(fh)  # Add the handlers to the logger
-
-
-# class SuppressFilter(logging.Filter):
-#     def filter(self, record):
-#         return 'wsman' not in record.getMessage()
 
 
 class ResponseParser(Logger):
