@@ -20,7 +20,7 @@ PyWinOS returns object with **exit code, stdout and sdtderr** response.
 ## Installation
 For most users, the recommended method to install is via pip:
 ```cmd
-pip install PyWinOS
+pip install pywinos
 ```
 ## Import
 ```python
