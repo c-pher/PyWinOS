@@ -1,5 +1,4 @@
-import os
-from os import path
+from os import path, name
 
 from setuptools import setup
 
@@ -10,7 +9,7 @@ INSTALL_REQUIRES = [
     'psutil'
 ]
 
-if os.name == 'nt':
+if name == 'nt':
     INSTALL_REQUIRES.append('pywin32')
 
 this_directory = path.abspath(path.dirname(__file__))
