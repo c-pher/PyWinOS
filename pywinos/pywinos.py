@@ -8,6 +8,7 @@ import socket
 import sys
 import warnings
 import zipfile
+from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
 from subprocess import Popen, PIPE, TimeoutExpired
@@ -24,7 +25,7 @@ from winrm.exceptions import (InvalidCredentialsError,
 __author__ = 'Andrey Komissarov'
 __email__ = 'a.komisssarov@gmail.com'
 __date__ = '12.2019'
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 
 @dataclass
@@ -439,6 +440,61 @@ class WinOSClient(Logger):
                               f'Maybe file with specified criteria not found.')
             return 'File not found. Try another search parameters.'
 
+    def get_file_version(self, path: str):
+        """Get local windows file version from file property
+
+        Windows only.
+
+        pip install pywin32
+
+        :param path: Full path to the file
+        :return: 51.1052.0.0
+        """
+
+        exists = os.path.exists(path)
+        if exists:
+            try:
+                from win32com.client import Dispatch
+            except ModuleNotFoundError as err:
+                warnings.warn('To use this method use "pip install pywin32". Windows only.')
+                self.logger.warning('To use this method perform "pip install pywin32"')
+                raise err
+
+            ver_parser = Dispatch('Scripting.FileSystemObject')
+            return ver_parser.GetFileVersion(path)
+        else:
+            return 'File not found'
+
+    def get_file_size(self, path: str):
+        """Get local windows file size
+
+        :param path: Full path to the file
+        :return:
+        """
+
+        try:
+            return os.path.getsize(path)
+        except FileNotFoundError as err:
+            self.logger.error(f'File not found. {err}')
+            raise err
+
+    @staticmethod
+    def replace_text(path: str, old_text: str, new_text: str,
+                     backup: str = '.bak'):
+        """Replace all string mansion with a new string
+
+        :param path: Full file path
+        :param old_text: Text to replace
+        :param new_text: Replacements text
+        :param backup: Create backup file with specified extension in
+        a current directory.
+        Use blank string "" if you do
+        """
+
+        with fileinput.FileInput(path, inplace=True, backup=backup) as file:
+            for line in file:
+                print(line.replace(old_text, new_text), end='')
+
     @staticmethod
     def get_absolute_path(path):
         """Returns absolute file path"""
@@ -582,6 +638,7 @@ class WinOSClient(Logger):
         command = f'ping -{counter} {packets_number} {ip_}'
         return self._run_local(cmd=command)
 
+    # ---------- Service / process management ----------
     @staticmethod
     def get_service(name: str):
         """Check windows local service status"""
@@ -595,70 +652,68 @@ class WinOSClient(Logger):
         return service
 
     @staticmethod
-    def get_process():
+    def get_process(name: str) -> psutil.Process:
         """Check windows local process status"""
 
-        return psutil.process_iter()
+        for proc in psutil.process_iter():
+            if proc.name() == name:
+                return proc
 
     def is_process_running(self, name: str) -> bool:
         """Check local windows process is running"""
 
-        return name in (p.name() for p in self.get_process())
+        return self.get_process(name).is_running()
 
-    def get_file_version(self, path: str):
-        """Get local windows file version from file property
+    def get_process_memory_info(self, name: str, full: bool = False) -> namedtuple:
+        """Return a namedtuple with variable fields depending on the
+        platform, representing memory information about the process.
 
-        Windows only.
+        The "portable" fields available on all platforms are `rss` and `vms`.
 
-        pip install pywin32
-
-        :param path: Full path to the file
-        :return: 51.1052.0.0
+        All numbers are expressed in bytes.
         """
 
-        exists = os.path.exists(path)
-        if exists:
+        if full:
             try:
-                from win32com.client import Dispatch
-            except ModuleNotFoundError as err:
-                warnings.warn('To use this method use "pip install pywin32". Windows only.')
-                self.logger.warning('To use this method perform "pip install pywin32"')
-                raise err
+                return self.get_process(name).memory_full_info()
+            except (psutil.AccessDenied, psutil.ZombieProcess) as err:
+                self.logger.error(f'Access denied or zombie process: {err}. Returned brief info, NOT FULL.')
+        return self.get_process(name).memory_info()
 
-            ver_parser = Dispatch('Scripting.FileSystemObject')
-            return ver_parser.GetFileVersion(path)
-        else:
-            return 'File not found'
-
-    def get_file_size(self, path: str):
-        """Get local windows file size
-
-        :param path: Full path to the file
-        :return:
+    def get_process_memory_percent(self, name: str, memtype='rss') -> float:
         """
+        Compare process memory to total physical system memory and
+        calculate process memory utilization as a percentage.
 
-        try:
-            return os.path.getsize(path)
-        except FileNotFoundError as err:
-            self.logger.error(f'File not found. {err}')
-            raise err
+        :param name: process name
+        :param memtype: what type of
+        process memory you want to compare against (defaults to "rss").
 
-    @staticmethod
-    def replace_text(path: str, old_text: str, new_text: str,
-                     backup: str = '.bak'):
-        """Replace all string mansion with a new string
-
-        :param path: Full file path
-        :param old_text: Text to replace
-        :param new_text: Replacements text
-        :param backup: Create backup file with specified extension in
-        a current directory.
-        Use blank string "" if you do
+        >>> psutil.Process().memory_info()._fields
+        ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
+        return self.get_process(name).memory_percent(memtype)
 
-        with fileinput.FileInput(path, inplace=True, backup=backup) as file:
-            for line in file:
-                print(line.replace(old_text, new_text), end='')
+    def get_process_cpu_percent(self, name: str, interval=None) -> float:
+        """
+        Return a float representing the current process CPU
+        utilization as a percentage.
+
+        When *interval* is 0.0 or None (default) compares process times
+        to system CPU times elapsed since last call, returning
+        immediately (non-blocking). That means that the first time
+        this is called it will return a meaningful 0.0 value.
+
+        When *interval* is > 0.0 compares process times to system CPU
+        times elapsed before and after the interval (blocking).
+
+        In this case is recommended for accuracy that this function
+        be called with at least 0.1 seconds between calls.
+
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+        """
+        return self.get_process(name).cpu_percent(interval)
 
     def debug_info(self):
         self.logger.info('Linux client created')
