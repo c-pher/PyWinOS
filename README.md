@@ -115,4 +115,14 @@ print(response.ok)  # True
 ### NOTE
 Main methods (**run_ps** and **run_cmd**) are OS independent. 
 
-But there are some methods works only on Windows. e.g. "get_file_version" depends on **pywin32** that available on Windows only.
+But there are some methods works only on Windows. e.g. **get_file_version()** depends on **pywin32** that available on
+ Windows only.
+---
+## Changelog
+#### 1.0.4 (8.01.2020)
+- **get_process()** method added. Returns 'psutil.Process' class
+- **is_process_running()** refactored.
+- **get_process_memory_info()** method added: returns namedtuple. **Full** - optional parameter that work with admin
+    rights only. **Else returns brief memory info!**
+- **get_process_memory_percent()** method added.
+- **get_process_cpu_percent()** method added.
