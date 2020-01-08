@@ -109,13 +109,12 @@ print(response.ok)  # True
 * get_service
 * is_process_running
 * debug_info (service method to get useful env info)
+* ...
 
-...
-
-### NOTE
+## NOTE
 Main methods (**run_ps** and **run_cmd**) are OS independent.
-But there are some methods works only on Windows. e.g. **get_file_version()** depends on **pywin32** that available on
- Windows only.
+But there are some methods works only on Windows. e.g. **get_file_version()** depends on **pywin32** that available on Windows only.
+
 ---
 
 ## Changelog
