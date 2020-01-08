@@ -22,6 +22,13 @@ For most users, the recommended method to install is via pip:
 ```cmd
 pip install pywinos
 ```
+
+or from source:
+
+```cmd
+python setup.py install
+```
+
 ## Import
 ```python
 from pywinos import WinOSClient
