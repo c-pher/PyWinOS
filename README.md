@@ -81,7 +81,7 @@ print(response.stderr)  # None
 print(response.ok)  # True
 ```
 
-## Helpful predefined methods to work with local Windows OS
+### Helpful predefined methods to work with local Windows OS
 
 * list_all_methods
 * is_host_available
@@ -111,15 +111,15 @@ print(response.ok)  # True
 * debug_info (service method to get useful env info)
 
 ...
--
-### NOTE
-Main methods (**run_ps** and **run_cmd**) are OS independent. 
 
+### NOTE
+Main methods (**run_ps** and **run_cmd**) are OS independent.
 But there are some methods works only on Windows. e.g. **get_file_version()** depends on **pywin32** that available on
  Windows only.
 ---
+
 ## Changelog
-#### 1.0.4 (8.01.2020)
+##### 1.0.4 (8.01.2020)
 - **get_process()** method added. Returns 'psutil.Process' class
 - **is_process_running()** refactored.
 - **get_process_memory_info()** method added: returns namedtuple. **Full** - optional parameter that work with admin
