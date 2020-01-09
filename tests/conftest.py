@@ -1,5 +1,12 @@
 import pytest
 
+from pywinos import WinOSClient
+
+
+@pytest.fixture
+def client_local():
+    return WinOSClient()
+
 
 @pytest.fixture
 def response_cmd_local():
