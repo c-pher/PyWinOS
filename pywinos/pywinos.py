@@ -678,6 +678,8 @@ class WinOSClient(Logger):
                 return self.get_process(name).memory_full_info()
             except (psutil.AccessDenied, psutil.ZombieProcess) as err:
                 self.logger.error(f'Access denied or zombie process: {err}. Returned brief info, NOT FULL.')
+            except psutil.NoSuchProcess as err:
+                self.logger.error(f'Process named "{name}" not found: {err}')
         return self.get_process(name).memory_info()
 
     def get_process_memory_percent(self, name: str, memtype='rss') -> float:
