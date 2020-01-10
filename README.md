@@ -113,8 +113,12 @@ print(response.ok)  # True
 * replace_text (replace text in file)
 * get_local_hostname_ip
 * get_process
+* kill_process
 * get_service
 * is_process_running
+* get_process_memory_info
+* get_process_memory_percent
+* get_process_cpu_percent
 * debug_info (service method to get useful env info)
 * ...
 
