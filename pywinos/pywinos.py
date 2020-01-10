@@ -651,6 +651,11 @@ class WinOSClient(Logger):
 
         return service
 
+    def kill_process(self, name: str):
+        """Kill windows local service status. Remote and local"""
+
+        return self.run_cmd(f'taskkill -im {name} /f')
+
     @staticmethod
     def get_process(name: str) -> psutil.Process:
         """Check windows local process status"""
@@ -691,7 +696,7 @@ class WinOSClient(Logger):
         :param memtype: what type of
         process memory you want to compare against (defaults to "rss").
 
-        >>> psutil.Process().memory_info()._fields
+        psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
         return self.get_process(name).memory_percent(memtype)
