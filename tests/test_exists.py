@@ -3,4 +3,4 @@ def test_exists_true(client_local):
 
 
 def test_exists_false(client_local):
-    assert client_local.exists('/linux')
+    assert client_local.exists('/root')

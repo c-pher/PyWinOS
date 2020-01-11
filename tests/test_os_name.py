@@ -10,7 +10,7 @@ def test_is_windows_true(client_local):
 
 @pytest.mark.skipif(os.name == 'nt', reason='Cannot be verified on windows')
 def test_is_windows_false(client_local):
-    assert client_local.is_windows, 'response is not Windows'
+    assert not client_local.is_windows, 'response is not Windows'
 
 
 @pytest.mark.skipif(os.name != 'posix', reason='Can be verified on Linux only')
