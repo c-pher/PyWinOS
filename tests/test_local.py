@@ -32,3 +32,10 @@ def test_get_local_hostname_ip():
     ip_regex = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
     assert ip_regex.match(response.ip), 'IP address not found'
+
+
+def test_list_all_methods(client_local):
+    response = client_local.list_all_methods()
+    assert isinstance(response, list)
+    assert 'run_cmd' in response
+    assert 'run_ps' in response
