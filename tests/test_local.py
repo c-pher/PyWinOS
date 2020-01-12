@@ -39,3 +39,8 @@ def test_list_all_methods(client_local):
     assert isinstance(response, list)
     assert 'run_cmd' in response
     assert 'run_ps' in response
+
+
+def test_run_local(client_local):
+    response = client_local._run_local('hostname')
+    assert not response.exited, 'Exit code not equal 0'
