@@ -372,8 +372,8 @@ class WinOSClient(Logger):
         )
 
     @staticmethod
-    def search(directory: str, ends=None, starts=None, filter_=None) -> list:
-        """Search for file(s)
+    def search(directory: str, ends: str = None, starts: str = None, filter_: str = None) -> list:
+        """Search for file(s) in specified directory
 
         :param directory: Root directory to search
         :param ends: Ends with
@@ -384,18 +384,17 @@ class WinOSClient(Logger):
 
         result = []
         for file in os.listdir(directory):
-            file_path = os.path.join(directory, file)
+            file_lower = file.lower()
 
             if ends:
-                if file_path.endswith(ends):
+                if file_lower.endswith(ends.lower()):
                     result.append(file)
             elif starts:
-                if file_path.startswith(starts):
+                if file_lower.startswith(starts.lower()):
                     result.append(file)
             elif filter_:
-                if filter_ in file_path:
+                if filter_.lower() in file_lower:
                     result.append(file)
-
         return result
 
     @staticmethod
