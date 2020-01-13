@@ -4,11 +4,13 @@ python:
   - "3.8"
   - "3.8-dev"  # 3.8 development branch
   - "nightly"  # nightly build
-# command to install dependencies
+os:
+  - windows
+  - linux
+  - osx
 install:
   - pip install -r requirements-test.txt
   - pip install -e .
-# command to run tests
 script:
   - flake8 --max-line-length=127 --statistics --count --exit-zero
   - pytest -v --cov=pywinos --cov-report=term-missing
