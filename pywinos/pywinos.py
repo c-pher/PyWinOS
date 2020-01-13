@@ -722,6 +722,12 @@ class WinOSClient(Logger):
         """
         return self.get_process(name).cpu_percent(interval)
 
+    def attach_share(self, share, username, password):
+        """Attach network share"""
+
+        command = f'net use {share} /u:{username} {password}'
+        return self.run_cmd(command)
+
     def debug_info(self):
         self.logger.info('Linux client created')
         self.logger.info(f'Local host: {self.get_current_os_name()}')
