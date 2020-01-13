@@ -5,9 +5,7 @@ python:
   - "3.8-dev"  # 3.8 development branch
   - "nightly"  # nightly build
 os:
-  - windows
   - linux
-  - osx
 install:
   - pip install -r requirements-test.txt
   - pip install -e .
