@@ -24,7 +24,7 @@ from winrm.exceptions import (InvalidCredentialsError,
 __author__ = 'Andrey Komissarov'
 __email__ = 'a.komisssarov@gmail.com'
 __date__ = '12.2019'
-__version__ = '1.0.5a'
+__version__ = '1.0.5'
 
 logger_name = 'WinOSClient'
 logger = logging.getLogger(logger_name)

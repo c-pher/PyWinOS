@@ -129,6 +129,9 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.0.5 (26.01.2020)
+- removed pywin32
+
 ##### 1.0.5a (26.01.2020)
 - logging refactored to avoid multiple log entries
 
