@@ -29,13 +29,16 @@ __version__ = '1.0.5a'
 logger_name = 'WinOSClient'
 logger = logging.getLogger(logger_name)
 logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
 formatter = logging.Formatter(fmt='%(asctime)-15s | %(levelname)s | %(name)s | %(message)s',
                               datefmt='%Y-%m-%d %H:%M:%S')
+
+# Console logger
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+# File logger
 fh = logging.FileHandler(f'{logger_name}.log', mode='w')
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)  # Add the formatter
