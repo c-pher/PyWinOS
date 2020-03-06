@@ -129,6 +129,9 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.0.6 (06.03.2020)
+- .json() method added to the response parser
+
 ##### 1.0.5 (26.01.2020)
 - removed pywin32
 
@@ -137,7 +140,6 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 
 ##### 1.0.4a (8.01.2020)
 - added attach_share()
-
 
 ##### 1.0.4 (8.01.2020)
 - **get_process()** method added. Returns 'psutil.Process' class

@@ -1,5 +1,6 @@
 import fileinput
 import hashlib
+import json
 import logging
 import os
 import platform
@@ -95,6 +96,9 @@ class ResponseParser:
         except AttributeError:
             return self.response[0] == 0
 
+    def json(self):
+        return json.loads(self.stdout)
+
 
 class WinOSClient:
     """The cross-platform tool to work with remote and local Windows OS.
@@ -107,9 +111,9 @@ class WinOSClient:
 
     def __init__(
             self,
-            host: str = "",
-            username: str = "",
-            password: str = "",
+            host: str = '',
+            username: str = '',
+            password: str = '',
             logger_enabled: bool = True,
     ):
 
@@ -240,9 +244,7 @@ class WinOSClient:
             logger.error('Try to use "run_cmd_local" method instead.')
             raise err
 
-    def run_cmd(
-            self, command: str, timeout: int = 60, *args
-    ) -> ResponseParser:
+    def run_cmd(self, command: str, timeout: int = 60, *args) -> ResponseParser:
         """
         Allows to execute cmd command on a remote server.
 
@@ -259,9 +261,7 @@ class WinOSClient:
             return self._run_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
-    def run_ps(
-            self, command: str, use_cred_ssp: bool = False
-    ) -> ResponseParser:
+    def run_ps(self, command: str, use_cred_ssp: bool = False) -> ResponseParser:
         """Allows to execute PowerShell command or script using a remote shell.
 
         :param command: Command
