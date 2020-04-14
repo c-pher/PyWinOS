@@ -1,3 +1,4 @@
+import base64
 import fileinput
 import hashlib
 import json
@@ -25,7 +26,7 @@ from winrm.exceptions import (InvalidCredentialsError,
 __author__ = 'Andrey Komissarov'
 __email__ = 'a.komisssarov@gmail.com'
 __date__ = '12.2019'
-__version__ = '1.0.5'
+__version__ = '1.0.7'
 
 logger_name = 'WinOSClient'
 logger = logging.getLogger(logger_name)
@@ -99,6 +100,15 @@ class ResponseParser:
 
     def json(self):
         return json.loads(self.stdout)
+
+    def decoded(self, encoding: str = 'utf8'):
+        """Decode stdout response.
+
+        :param encoding: utf8 by default
+        :return:
+        """
+
+        return base64.b64decode(self.stdout).decode(encoding)
 
 
 class WinOSClient:
@@ -262,13 +272,18 @@ class WinOSClient:
             return self._run_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
-    def run_ps(self, command: str, use_cred_ssp: bool = False) -> ResponseParser:
+    def run_ps(self, command: str, use_cred_ssp: bool = False, encoded_command: bool = False) -> ResponseParser:
         """Allows to execute PowerShell command or script using a remote shell.
 
         :param command: Command
         :param use_cred_ssp: Use CredSSP
+        :param encoded_command: Accepts a base-64-encoded string version of a command. Use if cyrillic in response.
         :return: Object with exit code, stdout and stderr
         """
+
+        if self.__local():
+            warnings.warn('"run_ps" method can work only on a remote server. Specify host and credentials')
+            exit(1)
 
         return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
 

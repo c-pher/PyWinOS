@@ -129,6 +129,10 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.0.7 (14.04.2020)
+- .decoded() method added to the response parser
+- warning added if run_ps invoked locally
+
 ##### 1.0.6 (06.03.2020)
 - .json() method added to the response parser
 
