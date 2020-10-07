@@ -41,13 +41,6 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-# File logger
-# fh = logging.FileHandler(f'{logger_name}.log', mode='w')
-# fh.setLevel(logging.DEBUG)
-# fh.setFormatter(formatter)  # Add the formatter
-# logger.addHandler(fh)  # Add the handlers to the logger
-
-
 class ResponseParser:
     """Response parser"""
 
@@ -272,18 +265,35 @@ class WinOSClient:
             return self._run_local(command, timeout)
         return self._client(command, cmd=True, *args)
 
-    def run_ps(self, command: str, use_cred_ssp: bool = False, encoded_command: bool = False) -> ResponseParser:
-        """Allows to execute PowerShell command or script using a remote shell.
+    def run_ps(self,
+               command: str = None,
+               use_cred_ssp: bool = False,
+               script: str = None,
+               timeout: int = 60,
+               **params) -> ResponseParser:
+        """Allows to execute PowerShell command or script using a remote shell and local server.
 
         :param command: Command
-        :param use_cred_ssp: Use CredSSP
-        :param encoded_command: Accepts a base-64-encoded string version of a command. Use if cyrillic in response.
+        :param use_cred_ssp: Use CredSSP.
+        :param script: Powershell script full path.
+        :param params: Named parameters to be invoked with the script specified.
+        :param timeout: Timeout in sec.
         :return: Object with exit code, stdout and stderr
         """
 
         if self.__local():
-            warnings.warn('"run_ps" method can work only on a remote server. Specify host and credentials')
-            exit(1)
+            cmd = f'powershell.exe {command}'
+            if script:
+                params_ = ' '.join([f'-{key} {value}' for key, value in params.items()])
+                cmd = f'powershell.exe -file {script} {params_}'
+
+            with Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE) as process:
+                logger.info('[LOCAL PS] ' + cmd)
+                process.wait(timeout)
+                stdout, stderr = process.communicate()
+                exitcode = process.wait(timeout=timeout)
+                response = exitcode, stdout, stderr
+                return ResponseParser(response)
 
         return self._client(command, ps=True, use_cred_ssp=use_cred_ssp)
 

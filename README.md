@@ -129,6 +129,11 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.0.8 (7.10.2020)
+- added local powershell usage
+- local run_ps can execute scripts and accept named arguments 
+
+
 ##### 1.0.7 (14.04.2020)
 - .decoded() method added to the response parser
 - warning added if run_ps invoked locally
