@@ -129,6 +129,14 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.1.0 (16.11.2020)
+new methods added
+- .get_content()
+- .get_json()
+
+##### 1.0.9 (16.11.2020)
+- .get_service_file_version() method added
+
 ##### 1.0.8 (7.10.2020)
 - added local powershell usage
 - local run_ps can execute scripts and accept named arguments 

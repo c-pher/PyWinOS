@@ -348,6 +348,15 @@ class WinOSClient:
 
         return os.path.exists(path)
 
+    def get_content(self, path):
+        return self.run_ps(f'Get-Content "{path}"')
+
+    def get_json(self, path: str) -> dict:
+        """Read JSON file as string and pretty print it into console """
+
+        file = self.get_content(path)
+        return file.json()
+
     @staticmethod
     def get_local_hostname_ip():
         """Get local IP and hostname
@@ -659,6 +668,11 @@ class WinOSClient:
         for proc in psutil.process_iter():
             if proc.name() == name:
                 return proc
+
+    def get_service_file_version(self, name: str):
+        """Get FileVersion from the process"""
+
+        return self.run_ps(f'(Get-Process -Name {name}).FileVersion')
 
     def is_process_running(self, name: str) -> bool:
         """Check local windows process is running"""
