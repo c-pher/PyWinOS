@@ -129,6 +129,20 @@ But there are some methods works only on Windows. e.g. **get_file_version()** de
 ---
 
 ## Changelog
+##### 1.1.1 (19.11.2020)
+- get_service
+- start_service
+- restart_service
+- stop_service
+- get_process
+- wait_service_start
+- is_process_running
+
+Removed:
+- get_process_memory_info
+- get_process_memory_percent
+- get_process_cpu_percent
+
 ##### 1.1.0 (16.11.2020)
 new methods added
 - .get_content()

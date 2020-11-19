@@ -14,7 +14,6 @@ from collections import namedtuple
 from datetime import datetime
 from subprocess import Popen, PIPE, TimeoutExpired
 
-import psutil
 import winrm
 from requests.exceptions import ConnectionError
 from winrm import Protocol
@@ -152,11 +151,7 @@ class WinOSClient:
         return not self.host or self.host == 'localhost' \
                or self.host == '127.0.0.1'
 
-    def is_host_available(
-            self,
-            port: int = 5985,
-            timeout: int = 5
-    ) -> bool:
+    def is_host_available(self, port: int = 5985, timeout: int = 5) -> bool:
         """Check remote host is available using specified port.
 
         Port 5985 used by default
@@ -484,8 +479,7 @@ class WinOSClient:
             raise err
 
     @staticmethod
-    def replace_text(path: str, old_text: str, new_text: str,
-                     backup: str = '.bak'):
+    def replace_text(path: str, old_text: str, new_text: str, backup: str = '.bak'):
         """Replace all string mansion with a new string
 
         :param path: Full file path
@@ -645,29 +639,39 @@ class WinOSClient:
 
     # ---------- Service / process management ----------
     @staticmethod
-    def get_service(name: str):
-        """Check windows local service status"""
+    def get_service(self, name: str):
+        """Check windows service status"""
 
-        try:
-            service = psutil.win_service_get(name)
-            service = service.as_dict()
-        except Exception as err:
-            raise err
+        return self.run_ps(f'Get-Service -Name {name}')
 
-        return service
+    def start_service(self, name: str):
+        """Start service"""
+        return self.run_ps(f'Start-Service -Name {name}')
+
+    def restart_service(self, name: str):
+        """Restart service"""
+        return self.run_ps(f'Restart-Service -Name {name}')
+
+    def stop_service(self, name: str):
+        """Stop service"""
+        return self.run_ps(f'Stop-Service -Name {name}')
+
+    @staticmethod
+    def get_process(self, name: str):
+        """Check windows process status"""
+
+        return self.run_ps(f'Get-Process -Name {name}')
 
     def kill_process(self, name: str):
         """Kill windows local service status. Remote and local"""
 
         return self.run_cmd(f'taskkill -im {name} /f')
 
-    @staticmethod
-    def get_process(name: str) -> psutil.Process:
-        """Check windows local process status"""
+    def wait_service_start(self, name: str, interval: int = 3):
+        """while ((Get-Service -Name ALG).Status -ne "Running"){Start-Sleep 1}"""
 
-        for proc in psutil.process_iter():
-            if proc.name() == name:
-                return proc
+        cmd = f'while ((Get-Service -Name {name}).Status -ne "Running"){{Start-Sleep {interval}}}'
+        return self.run_ps(cmd)
 
     def get_service_file_version(self, name: str):
         """Get FileVersion from the process"""
@@ -677,9 +681,13 @@ class WinOSClient:
     def is_process_running(self, name: str) -> bool:
         """Check local windows process is running"""
 
-        return self.get_process(name).is_running()
+        cmd = f'(Get-Service -Name {name}).Status -eq "running"'
+        response = self.run_ps(cmd)
+        if response.stdout == 'True':
+            return True
+        return False
 
-    def get_process_memory_info(self, name: str, full: bool = False) -> namedtuple:
+    def _get_process_memory_info(self, name: str, full: bool = False) -> namedtuple:
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
 
@@ -688,16 +696,9 @@ class WinOSClient:
         All numbers are expressed in bytes.
         """
 
-        if full:
-            try:
-                return self.get_process(name).memory_full_info()
-            except (psutil.AccessDenied, psutil.ZombieProcess) as err:
-                logger.error(f'Access denied or zombie process: {err}. Returned brief info, NOT FULL.')
-            except psutil.NoSuchProcess as err:
-                logger.error(f'Process named "{name}" not found: {err}')
-        return self.get_process(name).memory_info()
+        raise NotImplemented
 
-    def get_process_memory_percent(self, name: str, memtype='rss') -> float:
+    def _get_process_memory_percent(self, name: str, memtype='rss') -> float:
         """
         Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
@@ -709,9 +710,10 @@ class WinOSClient:
         psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        return self.get_process(name).memory_percent(memtype)
 
-    def get_process_cpu_percent(self, name: str, interval=None) -> float:
+        raise NotImplemented
+
+    def _get_process_cpu_percent(self, name: str, interval=None) -> float:
         """
         Return a float representing the current process CPU
         utilization as a percentage.
@@ -730,7 +732,8 @@ class WinOSClient:
         A value > 100.0 can be returned in case of processes running
         multiple threads on different CPU cores.
         """
-        return self.get_process(name).cpu_percent(interval)
+
+        raise NotImplemented
 
     def attach_share(self, share, username, password):
         """Attach network share"""
