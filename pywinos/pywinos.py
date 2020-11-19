@@ -638,7 +638,6 @@ class WinOSClient:
         return self._run_local(cmd=command)
 
     # ---------- Service / process management ----------
-    @staticmethod
     def get_service(self, name: str):
         """Check windows service status"""
 
@@ -656,7 +655,6 @@ class WinOSClient:
         """Stop service"""
         return self.run_ps(f'Stop-Service -Name {name}')
 
-    @staticmethod
     def get_process(self, name: str):
         """Check windows process status"""
 
