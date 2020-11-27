@@ -14,7 +14,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pywinos',
-    version='1.1.1.post0',
+    version='1.1.2',
     packages=['pywinos'],
     url='https://github.com/c-pher/PyWinOS.git',
     license='MIT',
