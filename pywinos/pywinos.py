@@ -117,8 +117,7 @@ class WinOSClient:
             host: str = '',
             username: str = '',
             password: str = '',
-            logger_enabled: bool = True,
-    ):
+            logger_enabled: bool = True):
 
         self.host = host
         self.username = username
@@ -211,7 +210,7 @@ class WinOSClient:
         response = None
 
         try:
-            logger.info('[COMMAND] ' + command)
+            logger.info(f'[{self.host}] ' + command)
             if ps:  # Use PowerShell
                 endpoint = (f'https://{self.host}:5986/wsman'
                             if use_cred_ssp
@@ -307,7 +306,7 @@ class WinOSClient:
 
         with Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE) as process:
             try:
-                logger.info('[COMMAND] ' + cmd)
+                logger.info('[LOCAL CMD] ' + cmd)
                 stdout, stderr = process.communicate(timeout=timeout)
                 exitcode = process.wait(timeout=timeout)
                 response = exitcode, stdout, stderr
@@ -639,9 +638,14 @@ class WinOSClient:
 
     # ---------- Service / process management ----------
     def get_service(self, name: str):
-        """Check windows service status"""
+        """Check windows service"""
 
         return self.run_ps(f'Get-Service -Name {name}')
+
+    def get_service_status(self, name: str):
+        """Check windows service status"""
+
+        return self.run_ps(f'(Get-Service -Name {name}).Status')
 
     def start_service(self, name: str):
         """Start service"""

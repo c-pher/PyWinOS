@@ -123,13 +123,26 @@ print(response.ok)  # True
 * ...
 
 ## NOTE
-Main methods (**run_ps** and **run_cmd**) are OS independent.
-But there are some methods works only on Windows. e.g. **get_file_version()** depends on **pywin32** that available on Windows only.
+
+Main methods (**run_ps** and **run_cmd**) are OS independent. But there are some methods works only on Windows. e.g. **
+get_file_version()** depends on **pywin32** that available on Windows only.
 
 ---
 
 ## Changelog
+
+##### 1.1.3 (-------)
+
+- get_service_status added
+- logger updated to log destination host
+
+##### 1.1.2 (17.12.2020)
+
+- get_service_file_version
+- is_process_running
+
 ##### 1.1.1 (19.11.2020)
+
 - get_service
 - start_service
 - restart_service
