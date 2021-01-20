@@ -1,5 +1,5 @@
 pytest==5.3.2
-pytest-cov==2.8.1
+pytest-cov==2.11.1
 coveralls==1.10.0
 flake8==3.7.9
 wheel==0.33.6
